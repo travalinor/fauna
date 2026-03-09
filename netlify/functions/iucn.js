@@ -17,60 +17,83 @@ exports.handler = async function (event) {
     };
   }
 
-  try {
-    // Search for the species by name
-    const searchUrl = `https://api.iucnredlist.org/api/v4/taxa/scientific_name?name=${encodeURIComponent(species)}`;
-    const searchRes = await fetch(searchUrl, {
-      headers: {
-        Authorization: token,
-        accept: "application/json",
-      },
-    });
+  const headers = {
+    Authorization: token,
+    accept: "application/json",
+  };
 
-    if (!searchRes.ok) {
-      const errText = await searchRes.text();
-      return {
-        statusCode: searchRes.status,
-        body: JSON.stringify({ error: `IUCN API error: ${searchRes.status}`, detail: errText }),
-      };
+  try {
+    // Step 1: Search by common name first
+    const commonNameUrl = `https://api.iucnredlist.org/api/v4/taxa/common_name/${encodeURIComponent(species)}`;
+    let assessmentId = null;
+    let taxonData = null;
+
+    const commonRes = await fetch(commonNameUrl, { headers });
+
+    if (commonRes.ok) {
+      const commonData = await commonRes.json();
+      // The response contains a list of taxa - find the first with assessments
+      const taxa = commonData.taxa || [];
+      for (const taxon of taxa) {
+        if (taxon.assessments && taxon.assessments.length > 0) {
+          // Find the latest assessment
+          const latest = taxon.assessments.find(a => a.latest) || taxon.assessments[0];
+          assessmentId = latest.assessment_id;
+          taxonData = taxon;
+          break;
+        }
+      }
     }
 
-    const searchData = await searchRes.json();
+    // Step 2: If common name search didn't work, try scientific name search
+    if (!assessmentId) {
+      // Try splitting the input as genus + species
+      const parts = species.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        const genus = parts[0];
+        const speciesName = parts[1];
+        const sciUrl = `https://api.iucnredlist.org/api/v4/taxa/scientific_name?genus_name=${encodeURIComponent(genus)}&species_name=${encodeURIComponent(speciesName)}`;
+        const sciRes = await fetch(sciUrl, { headers });
 
-    if (!searchData || !searchData.assessments || searchData.assessments.length === 0) {
+        if (sciRes.ok) {
+          const sciData = await sciRes.json();
+          const assessments = sciData.assessments || [];
+          if (assessments.length > 0) {
+            const latest = assessments.find(a => a.latest) || assessments[0];
+            assessmentId = latest.assessment_id;
+          }
+        }
+      }
+    }
+
+    if (!assessmentId) {
       return {
         statusCode: 404,
-        body: JSON.stringify({ error: "Species not found in IUCN Red List" }),
+        body: JSON.stringify({
+          error: `No species found for "${species}". Try using the scientific name — for example "Panthera uncia" for Snow Leopard.`
+        }),
       };
     }
 
-    // Get the most recent assessment
-    const assessment = searchData.assessments[0];
-    const assessmentId = assessment.assessment_id;
+    // Step 3: Fetch the full assessment
+    const assessmentUrl = `https://api.iucnredlist.org/api/v4/assessment/${assessmentId}`;
+    const assessmentRes = await fetch(assessmentUrl, { headers });
 
-    // Fetch full assessment details
-    const detailUrl = `https://api.iucnredlist.org/api/v4/assessment/${assessmentId}`;
-    const detailRes = await fetch(detailUrl, {
-      headers: {
-        Authorization: token,
-        accept: "application/json",
-      },
-    });
-
-    if (!detailRes.ok) {
+    if (!assessmentRes.ok) {
       return {
-        statusCode: detailRes.status,
-        body: JSON.stringify({ error: `IUCN detail error: ${detailRes.status}` }),
+        statusCode: assessmentRes.status,
+        body: JSON.stringify({ error: `Could not fetch assessment data (${assessmentRes.status})` }),
       };
     }
 
-    const detail = await detailRes.json();
+    const assessment = await assessmentRes.json();
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(detail),
+      body: JSON.stringify(assessment),
     };
+
   } catch (err) {
     return {
       statusCode: 500,
