@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fauna — Find Wildlife Worth Watching</title>
+  <meta name="description" content="Fauna helps wildlife-motivated travellers discover species, plan trips, and choose ethical wildlife experiences anywhere in the world." />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#4C77A9" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --horizon-blue: #4C77A9;
+      --mist-blue: #9BB9D4;
+      --warm-coral: #E4A58A;
+      --deep-graphite: #232323;
+      --cloud-white: #FAFAF7;
+      --blue-light: #EDF3F8;
+      --status-ex: #1a1a1a;
+      --status-ew: #3d1f5e;
+      --status-cr: #c0392b;
+      --status-en: #e67e22;
+      --status-vu: #f1c40f;
+      --status-nt: #27ae60;
+      --status-lc: #2ecc71;
+      --status-dd: #95a5a6;
+      --status-ne: #bdc3c7;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Figtree', sans-serif;
+      background: var(--cloud-white);
+      color: var(--deep-graphite);
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(250,250,247,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(76,119,169,0.12);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+
+    .nav-logo-mark {
+      width: 32px;
+      height: 32px;
+      background: var(--horizon-blue);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .nav-logo-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--deep-graphite);
+      letter-spacing: -0.02em;
+    }
+
+    .nav-tagline {
+      font-size: 0.8rem;
+      color: var(--horizon-blue);
+      font-weight: 500;
+      display: none;
+    }
+
+    @media (min-width: 600px) { .nav-tagline { display: block; } }
+
+    /* HERO */
+    .hero {
+      padding: 120px 2rem 60px;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--warm-coral);
+      background: rgba(228,165,138,0.12);
+      padding: 0.3rem 0.8rem;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: var(--deep-graphite);
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 span {
+      color: var(--horizon-blue);
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: #555;
+      line-height: 1.65;
+      max-width: 560px;
+      margin: 0 auto 2.5rem;
+      font-weight: 400;
+    }
+
+    /* SEARCH */
+    .search-wrap {
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .search-inner {
+      display: flex;
+      gap: 0;
+      background: white;
+      border: 2px solid rgba(76,119,169,0.25);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(76,119,169,0.08);
+    }
+
+    .search-inner:focus-within {
+      border-color: var(--horizon-blue);
+      box-shadow: 0 4px 24px rgba(76,119,169,0.18);
+    }
+
+    .search-icon {
+      padding: 0 1rem 0 1.2rem;
+      display: flex;
+      align-items: center;
+      color: var(--mist-blue);
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    #species-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-family: 'Figtree', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--deep-graphite);
+      padding: 1rem 0.5rem;
+      background: transparent;
+    }
+
+    #species-input::placeholder { color: #aaa; font-weight: 400; }
+
+    #search-btn {
+      background: var(--horizon-blue);
+      color: white;
+      border: none;
+      font-family: 'Figtree', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0 1.5rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+      margin: 6px;
+      border-radius: 10px;
+    }
+
+    #search-btn:hover { background: #3d6491; }
+    #search-btn:disabled { background: var(--mist-blue); cursor: not-allowed; }
+
+    .search-hints {
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .hint-chip {
+      font-size: 0.78rem;
+      color: var(--horizon-blue);
+      background: var(--blue-light);
+      border: 1px solid rgba(76,119,169,0.2);
+      padding: 0.25rem 0.7rem;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-weight: 500;
+    }
+
+    .hint-chip:hover { background: rgba(76,119,169,0.15); }
+
+    /* RESULTS AREA */
+    #results-area {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+      display: none;
+    }
+
+    /* LOADING */
+    .loading-state {
+      text-align: center;
+      padding: 3rem;
+      display: none;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--blue-light);
+      border-top-color: var(--horizon-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-state p { color: #777; font-size: 0.9rem; }
+
+    /* ERROR */
+    .error-state {
+      background: #fff5f5;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      display: none;
+      color: #c0392b;
+      font-size: 0.9rem;
+      max-width: 600px;
+      margin: 2rem auto;
+    }
+
+    /* SPECIES CARD */
+    .species-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(35,35,35,0.07);
+      margin-bottom: 2rem;
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-header {
+      padding: 2rem 2rem 1.5rem;
+      border-bottom: 1px solid #f0f0ee;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .card-names h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--deep-graphite);
+      margin-bottom: 0.2rem;
+    }
+
+    .card-names .latin {
+      font-size: 0.95rem;
+      color: #888;
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .iucn-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .iucn-badge .badge-code {
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    /* Status colour coding */
+    .status-EX { background: #1a1a1a; color: white; }
+    .status-EW { background: #3d1f5e; color: white; }
+    .status-CR { background: #c0392b; color: white; }
+    .status-EN { background: #e67e22; color: white; }
+    .status-VU { background: #e6b800; color: #1a1a1a; }
+    .status-NT { background: #27ae60; color: white; }
+    .status-LC { background: #2ecc71; color: #1a1a1a; }
+    .status-DD { background: #95a5a6; color: white; }
+    .status-NE { background: #ddd; color: #555; }
+
+    .card-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0;
+    }
+
+    .meta-item {
+      padding: 1.2rem 2rem;
+      border-right: 1px solid #f0f0ee;
+      border-bottom: 1px solid #f0f0ee;
+    }
+
+    .meta-item:last-child { border-right: none; }
+
+    .meta-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 0.3rem;
+    }
+
+    .meta-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--deep-graphite);
+    }
+
+    .trend-up { color: #e74c3c; }
+    .trend-down { color: #27ae60; }
+    .trend-stable { color: var(--horizon-blue); }
+    .trend-unknown { color: #aaa; }
+
+    /* ETHICS PLACEHOLDER */
+    .ethics-section {
+      padding: 1.5rem 2rem;
+      border-top: 1px solid #f0f0ee;
+      background: linear-gradient(135deg, rgba(76,119,169,0.03), rgba(228,165,138,0.04));
+    }
+
+    .ethics-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 0.8rem;
+    }
+
+    .ethics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem;
+    }
+
+    @media (min-width: 600px) {
+      .ethics-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .ethics-pill {
+      background: white;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 0.6rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ethics-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+      flex-shrink: 0;
+    }
+
+    .ethics-pill-label {
+      font-size: 0.75rem;
+      color: #888;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .ethics-coming-soon {
+      font-size: 0.72rem;
+      color: var(--warm-coral);
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    /* MAP */
+    .map-section {
+      border-top: 1px solid #f0f0ee;
+    }
+
+    .map-section-header {
+      padding: 1rem 2rem 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .map-section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
+    .map-source-tag {
+      font-size: 0.72rem;
+      color: var(--horizon-blue);
+      background: var(--blue-light);
+      padding: 0.2rem 0.6rem;
+      border-radius: 100px;
+      font-weight: 500;
+    }
+
+    #species-map {
+      height: 380px;
+      width: 100%;
+    }
+
+    .map-loading {
+      height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue-light);
+      color: #888;
+      font-size: 0.9rem;
+      gap: 0.5rem;
+    }
+
+    /* HABITAT */
+    .habitat-section {
+      padding: 1.5rem 2rem;
+      border-top: 1px solid #f0f0ee;
+    }
+
+    .habitat-section h3 {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 0.6rem;
+    }
+
+    .habitat-text {
+      font-size: 0.92rem;
+      line-height: 1.65;
+      color: #555;
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--deep-graphite);
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.8rem;
+    }
+
+    footer a { color: var(--mist-blue); text-decoration: none; }
+
+    footer .footer-logo {
+      font-size: 1rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.4rem;
+      letter-spacing: -0.02em;
+    }
+
+    /* ABOUT STRIP */
+    .about-strip {
+      background: var(--blue-light);
+      border-top: 1px solid rgba(76,119,169,0.15);
+      padding: 3rem 2rem;
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .about-strip h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--deep-graphite);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .about-strip p {
+      font-size: 0.9rem;
+      color: #666;
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      max-width: 800px;
+      margin: 2rem auto 0;
+    }
+
+    .pillar {
+      background: white;
+      border-radius: 14px;
+      padding: 1.2rem;
+      text-align: left;
+      border: 1px solid rgba(76,119,169,0.1);
+    }
+
+    .pillar-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+
+    .pillar h3 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--deep-graphite);
+      margin-bottom: 0.3rem;
+    }
+
+    .pillar p {
+      font-size: 0.78rem;
+      color: #888;
+      line-height: 1.5;
+      max-width: none;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="/">
+      <div class="nav-logo-mark">🦅</div>
+      <span class="nav-logo-text">Fauna</span>
+    </a>
+    <span class="nav-tagline">Ethical wildlife watching, worldwide</span>
+  </nav>
+
+  <section class="hero">
+    <span class="hero-eyebrow">Now in prototype</span>
+    <h1>Find wildlife<br><span>worth watching</span></h1>
+    <p class="hero-sub">Search any species to see its conservation status, global range, and whether experiences to see it in the wild are genuinely ethical.</p>
+
+    <div class="search-wrap">
+      <div class="search-inner">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          id="species-input"
+          placeholder="Try 'Snow Leopard' or 'Humpback Whale'..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="search-btn">Search</button>
+      </div>
+      <div class="search-hints">
+        <span class="hint-chip" data-query="Snow Leopard">Snow Leopard</span>
+        <span class="hint-chip" data-query="Mountain Gorilla">Mountain Gorilla</span>
+        <span class="hint-chip" data-query="Humpback Whale">Humpback Whale</span>
+        <span class="hint-chip" data-query="Giant Panda">Giant Panda</span>
+        <span class="hint-chip" data-query="African Elephant">African Elephant</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="loading-state" id="loading">
+    <div class="loading-spinner"></div>
+    <p>Searching IUCN Red List...</p>
+  </div>
+
+  <div class="error-state" id="error-box"></div>
+
+  <section id="results-area">
+    <div class="species-card" id="species-card">
+
+      <div class="card-header">
+        <div class="card-names">
+          <h2 id="common-name">—</h2>
+          <div class="latin" id="latin-name">—</div>
+        </div>
+        <div class="iucn-badge" id="iucn-badge">
+          <span class="badge-code" id="status-code">—</span>
+          <span id="status-label">—</span>
+        </div>
+      </div>
+
+      <div class="card-meta">
+        <div class="meta-item">
+          <div class="meta-label">Population trend</div>
+          <div class="meta-value" id="pop-trend">—</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Kingdom</div>
+          <div class="meta-value" id="kingdom">—</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Class</div>
+          <div class="meta-value" id="class-name">—</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Last assessed</div>
+          <div class="meta-value" id="last-assessed">—</div>
+        </div>
+      </div>
+
+      <div class="habitat-section" id="habitat-section" style="display:none">
+        <h3>Habitat</h3>
+        <p class="habitat-text" id="habitat-text"></p>
+      </div>
+
+      <div class="ethics-section">
+        <div class="ethics-label">Ethics Score — coming soon</div>
+        <div class="ethics-grid">
+          <div class="ethics-pill">
+            <div class="ethics-dot"></div>
+            <span class="ethics-pill-label">Revenue to conservation</span>
+          </div>
+          <div class="ethics-pill">
+            <div class="ethics-dot"></div>
+            <span class="ethics-pill-label">Operator certification</span>
+          </div>
+          <div class="ethics-pill">
+            <div class="ethics-dot"></div>
+            <span class="ethics-pill-label">Disturbance to animal</span>
+          </div>
+          <div class="ethics-pill">
+            <div class="ethics-dot"></div>
+            <span class="ethics-pill-label">Local community benefit</span>
+          </div>
+        </div>
+        <p class="ethics-coming-soon">Ethics ratings are being developed with conservation partners.</p>
+      </div>
+
+      <div class="map-section">
+        <div class="map-section-header">
+          <span class="map-section-title">Recent sightings — iNaturalist</span>
+          <span class="map-source-tag">Live data</span>
+        </div>
+        <div id="map-loading" class="map-loading">
+          <span>🗺</span> Loading sightings...
+        </div>
+        <div id="species-map" style="display:none"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="about-strip">
+    <h2>Wildlife watching, done right</h2>
+    <p>Fauna is being built to give wildlife travellers the one thing that doesn't exist yet: a single place to find what's out there, where to go, and whether the experience is genuinely good for the animals involved.</p>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="pillar-icon">🌍</div>
+        <h3>Global scope</h3>
+        <p>All vertebrate species, anywhere in the world. Not just birds, not just safari.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">⭐</div>
+        <h3>Ethics framework</h3>
+        <p>Every experience rated on four criteria, developed with conservation partners.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">🔬</div>
+        <h3>Citizen science</h3>
+        <p>Your sightings contribute to conservation monitoring via iNaturalist and GBIF.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">🗺</div>
+        <h3>Trip planning</h3>
+        <p>Know when to go, where to look, and who to trust before you book anything.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logo">Fauna</div>
+    <p>A <a href="https://raptorbeak.com">RaptorBeak</a> project &nbsp;·&nbsp; <a href="mailto:travis@raptorbeak.com">travis@raptorbeak.com</a></p>
+    <p style="margin-top:0.5rem">Species data from <a href="https://iucnredlist.org">IUCN Red List</a> and <a href="https://inaturalist.org">iNaturalist</a>. Prototype — not for commercial use.</p>
+  </footer>
+
+  <script>
+    const IUCN_STATUS = {
+      EX:  { label: 'Extinct',              cls: 'status-EX' },
+      EW:  { label: 'Extinct in the Wild',  cls: 'status-EW' },
+      CR:  { label: 'Critically Endangered',cls: 'status-CR' },
+      EN:  { label: 'Endangered',           cls: 'status-EN' },
+      VU:  { label: 'Vulnerable',           cls: 'status-VU' },
+      NT:  { label: 'Near Threatened',      cls: 'status-NT' },
+      LC:  { label: 'Least Concern',        cls: 'status-LC' },
+      DD:  { label: 'Data Deficient',       cls: 'status-DD' },
+      NE:  { label: 'Not Evaluated',        cls: 'status-NE' },
+    };
+
+    const TREND_MAP = {
+      Decreasing: { label: '↓ Decreasing', cls: 'trend-down' },
+      Increasing: { label: '↑ Increasing', cls: 'trend-up' },
+      Stable:     { label: '→ Stable',     cls: 'trend-stable' },
+      Unknown:    { label: 'Unknown',       cls: 'trend-unknown' },
+    };
+
+    let map = null;
+    let markersLayer = null;
+
+    const input = document.getElementById('species-input');
+    const btn = document.getElementById('search-btn');
+    const loading = document.getElementById('loading');
+    const errorBox = document.getElementById('error-box');
+    const resultsArea = document.getElementById('results-area');
+
+    // Hint chips
+    document.querySelectorAll('.hint-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        input.value = chip.dataset.query;
+        doSearch();
+      });
+    });
+
+    // Enter key
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doSearch();
+    });
+
+    btn.addEventListener('click', doSearch);
+
+    function showLoading() {
+      loading.style.display = 'block';
+      errorBox.style.display = 'none';
+      resultsArea.style.display = 'none';
+      btn.disabled = true;
+    }
+
+    function hideLoading() {
+      loading.style.display = 'none';
+      btn.disabled = false;
+    }
+
+    function showError(msg) {
+      hideLoading();
+      errorBox.textContent = msg;
+      errorBox.style.display = 'block';
+    }
+
+    async function doSearch() {
+      const query = input.value.trim();
+      if (!query) return;
+
+      showLoading();
+      resultsArea.style.display = 'none';
+
+      try {
+        const res = await fetch(`/api/iucn?species=${encodeURIComponent(query)}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (res.status === 404) {
+            showError(`No species found for "${query}". Try using the scientific name (e.g. "Panthera uncia") or check the spelling.`);
+          } else {
+            showError(data.error || 'Something went wrong fetching species data.');
+          }
+          return;
+        }
+
+        renderCard(data);
+        loadiNatSightings(query);
+        hideLoading();
+        resultsArea.style.display = 'block';
+        resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (err) {
+        showError('Could not reach the Fauna API. Please try again.');
+      }
+    }
+
+    function renderCard(data) {
+      // Names
+      const taxon = data.taxon || {};
+      const commonNames = taxon.common_names || [];
+      const englishName = commonNames.find(n => n.language === 'eng') || commonNames[0];
+      const displayName = englishName ? englishName.name : (taxon.scientific_name || 'Unknown species');
+      const scientificName = taxon.scientific_name || '';
+
+      document.getElementById('common-name').textContent = displayName;
+      document.getElementById('latin-name').textContent = scientificName;
+
+      // IUCN status
+      const category = data.red_list_category || {};
+      const code = category.code || 'NE';
+      const statusInfo = IUCN_STATUS[code] || IUCN_STATUS['NE'];
+      const badge = document.getElementById('iucn-badge');
+      badge.className = `iucn-badge ${statusInfo.cls}`;
+      document.getElementById('status-code').textContent = code;
+      document.getElementById('status-label').textContent = statusInfo.label;
+
+      // Population trend
+      const popTrend = data.population_trend || {};
+      const trendCode = popTrend.description || 'Unknown';
+      const trendInfo = TREND_MAP[trendCode] || { label: trendCode, cls: 'trend-unknown' };
+      const trendEl = document.getElementById('pop-trend');
+      trendEl.textContent = trendInfo.label;
+      trendEl.className = `meta-value ${trendInfo.cls}`;
+
+      // Taxonomy
+      document.getElementById('kingdom').textContent = taxon.kingdom_name || '—';
+      document.getElementById('class-name').textContent = taxon.class_name || '—';
+
+      // Year assessed
+      const year = data.year_published || data.assessment_date || '—';
+      document.getElementById('last-assessed').textContent = year;
+
+      // Habitat (use rationale or ecology narrative if available)
+      const rationale = data.rationale || data.habitat || '';
+      const habitatSection = document.getElementById('habitat-section');
+      if (rationale) {
+        // Strip any HTML tags
+        const clean = rationale.replace(/<[^>]*>/g, '').trim();
+        const truncated = clean.length > 400 ? clean.substring(0, 400) + '...' : clean;
+        document.getElementById('habitat-text').textContent = truncated;
+        habitatSection.style.display = 'block';
+      } else {
+        habitatSection.style.display = 'none';
+      }
+    }
+
+    async function loadiNatSightings(speciesName) {
+      const mapContainer = document.getElementById('species-map');
+      const mapLoading = document.getElementById('map-loading');
+
+      mapLoading.style.display = 'flex';
+      mapContainer.style.display = 'none';
+
+      try {
+        const url = `https://api.inaturalist.org/v1/observations?taxon_name=${encodeURIComponent(speciesName)}&quality_grade=research&per_page=100&order=desc&order_by=observed_on&geo=true&photos=false`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        mapLoading.style.display = 'none';
+        mapContainer.style.display = 'block';
+
+        // Init or reset map
+        if (map) {
+          map.remove();
+          map = null;
+        }
+
+        map = L.map('species-map', { scrollWheelZoom: false }).setView([20, 0], 2);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          attribution: '© OpenStreetMap, © CARTO',
+          maxZoom: 18,
+        }).addTo(map);
+
+        markersLayer = L.layerGroup().addTo(map);
+
+        const observations = data.results || [];
+
+        if (observations.length === 0) {
+          const noDataDiv = L.control({ position: 'topright' });
+          noDataDiv.onAdd = function() {
+            const div = L.DomUtil.create('div');
+            div.style.cssText = 'background:white;padding:8px 12px;border-radius:8px;font-size:0.8rem;color:#888;box-shadow:0 2px 8px rgba(0,0,0,0.1)';
+            div.textContent = 'No recent sightings found';
+            return div;
+          };
+          noDataDiv.addTo(map);
+          return;
+        }
+
+        const bounds = [];
+
+        observations.forEach(obs => {
+          if (!obs.location) return;
+          const [lat, lng] = obs.location.split(',').map(Number);
+          if (isNaN(lat) || isNaN(lng)) return;
+
+          bounds.push([lat, lng]);
+
+          const circle = L.circleMarker([lat, lng], {
+            radius: 6,
+            fillColor: '#4C77A9',
+            color: '#fff',
+            weight: 1.5,
+            opacity: 1,
+            fillOpacity: 0.75,
+          });
+
+          const date = obs.observed_on || 'Date unknown';
+          const place = obs.place_guess || 'Location unknown';
+          circle.bindPopup(`
+            <div style="font-family:Figtree,sans-serif;font-size:0.85rem;min-width:140px">
+              <strong style="color:#232323">${speciesName}</strong><br>
+              <span style="color:#888">${place}</span><br>
+              <span style="color:#4C77A9;font-size:0.78rem">${date}</span>
+            </div>
+          `);
+
+          markersLayer.addLayer(circle);
+        });
+
+        if (bounds.length > 0) {
+          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
+        }
+
+        // Sighting count badge
+        const countCtrl = L.control({ position: 'bottomleft' });
+        countCtrl.onAdd = function() {
+          const div = L.DomUtil.create('div');
+          div.style.cssText = 'background:white;padding:6px 10px;border-radius:8px;font-size:0.78rem;color:#4C77A9;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.1);font-family:Figtree,sans-serif';
+          div.textContent = `${observations.length} verified sightings`;
+          return div;
+        };
+        countCtrl.addTo(map);
+
+      } catch (err) {
+        mapLoading.style.display = 'none';
+        mapContainer.style.display = 'block';
+        if (!map) {
+          map = L.map('species-map').setView([20, 0], 2);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap, © CARTO',
+          }).addTo(map);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
