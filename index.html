@@ -929,43 +929,47 @@
       showLoading();
       resultsArea.style.display = 'none';
 
+      let data;
       try {
         const res = await fetch(`/api/iucn?species=${encodeURIComponent(query)}`);
-        const data = await res.json();
+        data = await res.json();
 
         if (!res.ok) {
           if (res.status === 404) {
-            showError(`No species found for "${query}". Try using the scientific name (e.g. "Panthera uncia") or check the spelling.`);
+            showError(`No species found for "${query}". Try a name from the suggestions list.`);
           } else {
             showError(data.error || 'Something went wrong fetching species data.');
           }
           return;
         }
+      } catch (err) {
+        showError('Could not reach the Fauna API. Please check your connection and try again.');
+        return;
+      }
 
-        renderCard(data);
+      try {
+        renderCard(data, query);
         loadiNatSightings(query);
         hideLoading();
         resultsArea.style.display = 'block';
         resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
       } catch (err) {
-        showError('Could not reach the Fauna API. Please try again.');
+        console.error('Render error:', err);
+        showError('Species data received but could not be displayed. Error: ' + err.message);
       }
     }
 
-    function renderCard(data) {
-      // Names — prefer the searched name, then English common name, then scientific name
+    function renderCard(data, query) {
       const taxon = data.taxon || {};
-      const scientificName = taxon.scientific_name || '';
+      const scientificName = String(taxon.scientific_name || '');
 
-      // Use the name the user actually searched for if available
-      let displayName = data._searched_name || '';
+      // Display name: use what the user searched, capitalised
+      let displayName = query || '';
       if (!displayName) {
-        const commonNames = taxon.common_names || [];
-        const englishName = commonNames.find(n => n.language === 'eng') || commonNames[0];
-        displayName = englishName ? englishName.name : (scientificName || 'Unknown species');
+        const commonNames = Array.isArray(taxon.common_names) ? taxon.common_names : [];
+        const englishName = commonNames.find(n => n && n.language === 'eng') || commonNames[0];
+        displayName = (englishName && englishName.name) ? englishName.name : (scientificName || 'Unknown species');
       }
-      // Capitalise first letter of each word
       displayName = displayName.replace(/\b\w/g, l => l.toUpperCase());
 
       document.getElementById('common-name').textContent = displayName;
@@ -973,42 +977,42 @@
 
       // IUCN status
       const category = data.red_list_category || {};
-      const code = category.code || 'NE';
+      const code = String(category.code || 'NE');
       const statusInfo = IUCN_STATUS[code] || IUCN_STATUS['NE'];
       const badge = document.getElementById('iucn-badge');
-      badge.className = `iucn-badge ${statusInfo.cls}`;
+      badge.className = 'iucn-badge ' + statusInfo.cls;
       document.getElementById('status-code').textContent = code;
       document.getElementById('status-label').textContent = statusInfo.label;
 
-      // Population trend — handle all possible API response shapes
+      // Population trend
       let trendCode = 'Unknown';
       const pt = data.population_trend;
-      if (typeof pt === 'string') {
-        trendCode = pt;
-      } else if (pt && typeof pt === 'object') {
-        // Try every likely key the API might use
-        trendCode = pt.description || pt.name || pt.code || pt.title || pt.value || Object.values(pt)[0] || 'Unknown';
+      if (pt) {
+        if (typeof pt === 'string') {
+          trendCode = pt;
+        } else if (typeof pt === 'object') {
+          trendCode = pt.description || pt.name || pt.code || pt.title || 'Unknown';
+        }
       }
-      // Normalise casing for lookup
+      if (typeof trendCode !== 'string') trendCode = 'Unknown';
       const trendNorm = trendCode.charAt(0).toUpperCase() + trendCode.slice(1).toLowerCase();
-      const trendInfo = TREND_MAP[trendNorm] || TREND_MAP[trendCode] || { label: trendCode || 'Unknown', cls: 'trend-unknown' };
+      const trendInfo = TREND_MAP[trendNorm] || TREND_MAP[trendCode] || { label: trendCode, cls: 'trend-unknown' };
       const trendEl = document.getElementById('pop-trend');
       trendEl.textContent = trendInfo.label;
-      trendEl.className = `meta-value ${trendInfo.cls}`;
+      trendEl.className = 'meta-value ' + trendInfo.cls;
 
       // Taxonomy
-      document.getElementById('kingdom').textContent = taxon.kingdom_name || '—';
-      document.getElementById('class-name').textContent = taxon.class_name || '—';
+      document.getElementById('kingdom').textContent = String(taxon.kingdom_name || '—');
+      document.getElementById('class-name').textContent = String(taxon.class_name || '—');
 
       // Year assessed
-      const year = data.year_published || data.assessment_date || '—';
-      document.getElementById('last-assessed').textContent = year;
+      const year = data.year_published || (data.assessment_date ? data.assessment_date.slice(0, 4) : null) || '—';
+      document.getElementById('last-assessed').textContent = String(year);
 
-      // Habitat (use rationale or ecology narrative if available)
+      // Habitat / rationale
       const rationale = data.rationale || data.habitat || '';
       const habitatSection = document.getElementById('habitat-section');
-      if (rationale) {
-        // Strip any HTML tags
+      if (rationale && typeof rationale === 'string') {
         const clean = rationale.replace(/<[^>]*>/g, '').trim();
         const truncated = clean.length > 400 ? clean.substring(0, 400) + '...' : clean;
         document.getElementById('habitat-text').textContent = truncated;
