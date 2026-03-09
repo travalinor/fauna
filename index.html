@@ -221,6 +221,43 @@
 
     .hint-chip:hover { background: rgba(76,119,169,0.15); }
 
+    /* AUTOCOMPLETE */
+    #autocomplete-list {
+      position: absolute;
+      top: calc(100% - 0.6rem);
+      left: 0; right: 0;
+      background: white;
+      border: 2px solid var(--horizon-blue);
+      border-top: none;
+      border-radius: 0 0 16px 16px;
+      overflow: hidden;
+      z-index: 50;
+      box-shadow: 0 8px 24px rgba(76,119,169,0.15);
+      display: none;
+    }
+
+    .autocomplete-item {
+      padding: 0.75rem 1.2rem;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--deep-graphite);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      border-bottom: 1px solid #f0f0ee;
+      transition: background 0.1s;
+    }
+
+    .autocomplete-item:last-child { border-bottom: none; }
+
+    .autocomplete-item:hover, .autocomplete-item.active {
+      background: var(--blue-light);
+      color: var(--horizon-blue);
+    }
+
+    .autocomplete-match { font-weight: 700; color: var(--horizon-blue); }
+
     /* RESULTS AREA */
     #results-area {
       max-width: 1100px;
@@ -596,6 +633,7 @@
         />
         <button id="search-btn">Search</button>
       </div>
+      <div id="autocomplete-list"></div>
       <div class="search-hints">
         <span class="hint-chip" data-query="Snow Leopard">Snow Leopard</span>
         <span class="hint-chip" data-query="Mountain Gorilla">Mountain Gorilla</span>
@@ -741,26 +779,127 @@
       Unknown:    { label: 'Unknown',       cls: 'trend-unknown' },
     };
 
+    // Full list of searchable species names for autocomplete
+    const SPECIES_NAMES = [
+      'African Elephant', 'African Forest Elephant', 'African Penguin', 'African Wild Dog',
+      'Asian Elephant', 'Beluga Whale', 'Black Rhino', 'Black Rhinoceros',
+      'Blue Whale', 'Bonobo', 'Bornean Orangutan', 'Bottlenose Dolphin',
+      'Brown Bear', 'California Condor', 'Cheetah', 'Chimpanzee',
+      'Chinese Giant Salamander', 'Clouded Leopard', 'Dugong', 'Emperor Penguin',
+      'Fin Whale', 'Gharial', 'Giant Anteater', 'Giant Panda',
+      'Giraffe', 'Gorilla', 'Great White Shark', 'Greater One-Horned Rhinoceros',
+      'Green Sea Turtle', 'Grevy\'s Zebra', 'Grey Wolf', 'Grizzly Bear',
+      'Hammerhead Shark', 'Harpy Eagle', 'Hawksbill Turtle', 'Hippopotamus',
+      'Humpback Whale', 'Hyacinth Macaw', 'Indian Rhino', 'Japanese Macaque',
+      'Jaguar', 'Javan Rhino', 'Kakapo', 'Killer Whale',
+      'Komodo Dragon', 'Leatherback Turtle', 'Leopard', 'Lion',
+      'Loggerhead Turtle', 'Maned Wolf', 'Manta Ray', 'Manatee',
+      'Mountain Gorilla', 'Mountain Zebra', 'Narwhal', 'Numbat',
+      'Okapi', 'Orangutan', 'Orca', 'Painted Dog',
+      'Pangolin', 'Philippine Eagle', 'Platypus', 'Polar Bear',
+      'Proboscis Monkey', 'Pygmy Hippo', 'Quoll', 'Red Panda',
+      'Red Wolf', 'Right Whale', 'Saiga', 'Saltwater Crocodile',
+      'Snow Leopard', 'Snow Monkey', 'Spectacled Bear', 'Sperm Whale',
+      'Spix\'s Macaw', 'Sun Bear', 'Sumatran Orangutan', 'Sumatran Rhino',
+      'Sunda Pangolin', 'Tasmanian Devil', 'Tiger', 'Wandering Albatross',
+      'Whale Shark', 'Western Gorilla', 'White Rhino', 'White Rhinoceros',
+      'Wild Bactrian Camel', 'Wolf',
+    ].sort();
+
     let map = null;
     let markersLayer = null;
+    let activeIndex = -1;
 
     const input = document.getElementById('species-input');
     const btn = document.getElementById('search-btn');
     const loading = document.getElementById('loading');
     const errorBox = document.getElementById('error-box');
     const resultsArea = document.getElementById('results-area');
+    const autocompleteList = document.getElementById('autocomplete-list');
+
+    // Autocomplete
+    function showAutocomplete(query) {
+      if (!query || query.length < 2) {
+        autocompleteList.style.display = 'none';
+        return;
+      }
+      const q = query.toLowerCase();
+      const matches = SPECIES_NAMES.filter(n => n.toLowerCase().includes(q)).slice(0, 6);
+      if (matches.length === 0) {
+        autocompleteList.style.display = 'none';
+        return;
+      }
+      autocompleteList.innerHTML = matches.map((name, i) => {
+        // Bold the matching part
+        const idx = name.toLowerCase().indexOf(q);
+        const before = name.slice(0, idx);
+        const match = name.slice(idx, idx + q.length);
+        const after = name.slice(idx + q.length);
+        return `<div class="autocomplete-item" data-index="${i}" data-name="${name}">
+          🐾 ${before}<span class="autocomplete-match">${match}</span>${after}
+        </div>`;
+      }).join('');
+      autocompleteList.style.display = 'block';
+      activeIndex = -1;
+
+      autocompleteList.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('mousedown', e => {
+          e.preventDefault();
+          input.value = item.dataset.name;
+          autocompleteList.style.display = 'none';
+          doSearch();
+        });
+      });
+    }
+
+    input.addEventListener('input', () => showAutocomplete(input.value));
+
+    input.addEventListener('blur', () => {
+      setTimeout(() => { autocompleteList.style.display = 'none'; }, 150);
+    });
+
+    input.addEventListener('focus', () => {
+      if (input.value.length >= 2) showAutocomplete(input.value);
+    });
+
+    // Keyboard navigation for autocomplete
+    input.addEventListener('keydown', e => {
+      const items = autocompleteList.querySelectorAll('.autocomplete-item');
+      if (autocompleteList.style.display === 'block' && items.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          activeIndex = Math.min(activeIndex + 1, items.length - 1);
+          items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          activeIndex = Math.max(activeIndex - 1, -1);
+          items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+          return;
+        }
+        if (e.key === 'Enter' && activeIndex >= 0) {
+          e.preventDefault();
+          input.value = items[activeIndex].dataset.name;
+          autocompleteList.style.display = 'none';
+          doSearch();
+          return;
+        }
+        if (e.key === 'Escape') {
+          autocompleteList.style.display = 'none';
+          return;
+        }
+      }
+      if (e.key === 'Enter') doSearch();
+    });
 
     // Hint chips
     document.querySelectorAll('.hint-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         input.value = chip.dataset.query;
+        autocompleteList.style.display = 'none';
         doSearch();
       });
-    });
-
-    // Enter key
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') doSearch();
     });
 
     btn.addEventListener('click', doSearch);
@@ -841,15 +980,18 @@
       document.getElementById('status-code').textContent = code;
       document.getElementById('status-label').textContent = statusInfo.label;
 
-      // Population trend — handle both string and object formats from the API
+      // Population trend — handle all possible API response shapes
       let trendCode = 'Unknown';
       const pt = data.population_trend;
       if (typeof pt === 'string') {
         trendCode = pt;
       } else if (pt && typeof pt === 'object') {
-        trendCode = pt.description || pt.name || pt.code || 'Unknown';
+        // Try every likely key the API might use
+        trendCode = pt.description || pt.name || pt.code || pt.title || pt.value || Object.values(pt)[0] || 'Unknown';
       }
-      const trendInfo = TREND_MAP[trendCode] || { label: trendCode || 'Unknown', cls: 'trend-unknown' };
+      // Normalise casing for lookup
+      const trendNorm = trendCode.charAt(0).toUpperCase() + trendCode.slice(1).toLowerCase();
+      const trendInfo = TREND_MAP[trendNorm] || TREND_MAP[trendCode] || { label: trendCode || 'Unknown', cls: 'trend-unknown' };
       const trendEl = document.getElementById('pop-trend');
       trendEl.textContent = trendInfo.label;
       trendEl.className = `meta-value ${trendInfo.cls}`;
