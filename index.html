@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fauna — Find Wildlife Worth Watching</title>
+  <title>Fauna — Wildlife Worth Watching</title>
   <meta name="description" content="Fauna helps wildlife-motivated travellers discover species, plan trips, and choose ethical wildlife experiences anywhere in the world." />
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#4C77A9" />
+  <meta name="theme-color" content="#1B2E1E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -17,17 +17,18 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --horizon-blue: #4C77A9;
-      --mist-blue: #9BB9D4;
-      --warm-coral: #E4A58A;
-      --deep-graphite: #232323;
-      --cloud-white: #FAFAF7;
-      --blue-light: #EDF3F8;
+      --forest-night: #1B2E1E;
+      --canopy: #2E5339;
+      --amber: #C8873C;
+      --parchment: #E8D5B0;
+      --bone-white: #F7F4EE;
+      --parchment-light: rgba(232,213,176,0.25);
+      --canopy-light: rgba(46,83,57,0.08);
       --status-ex: #1a1a1a;
       --status-ew: #3d1f5e;
       --status-cr: #c0392b;
       --status-en: #e67e22;
-      --status-vu: #f1c40f;
+      --status-vu: #e6b800;
       --status-nt: #27ae60;
       --status-lc: #2ecc71;
       --status-dd: #95a5a6;
@@ -37,9 +38,9 @@
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Figtree', sans-serif;
-      background: var(--cloud-white);
-      color: var(--deep-graphite);
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bone-white);
+      color: var(--forest-night);
       min-height: 100vh;
     }
 
@@ -48,9 +49,9 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 100;
-      background: rgba(250,250,247,0.92);
+      background: rgba(27,46,30,0.96);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(76,119,169,0.12);
+      border-bottom: 1px solid rgba(200,135,60,0.15);
       padding: 0 2rem;
       height: 60px;
       display: flex;
@@ -61,14 +62,14 @@
     .nav-logo {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
       text-decoration: none;
     }
 
     .nav-logo-mark {
       width: 32px;
       height: 32px;
-      background: var(--horizon-blue);
+      background: var(--amber);
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -77,17 +78,21 @@
     }
 
     .nav-logo-text {
-      font-size: 1.2rem;
+      font-family: 'Lora', serif;
+      font-size: 1.25rem;
       font-weight: 700;
-      color: var(--deep-graphite);
-      letter-spacing: -0.02em;
+      color: var(--bone-white);
+      letter-spacing: -0.01em;
     }
 
     .nav-tagline {
       font-size: 0.8rem;
-      color: var(--horizon-blue);
-      font-weight: 500;
+      color: var(--parchment);
+      font-weight: 400;
+      font-style: italic;
+      font-family: 'Lora', serif;
       display: none;
+      opacity: 0.8;
     }
 
     @media (min-width: 600px) { .nav-tagline { display: block; } }
@@ -102,34 +107,36 @@
 
     .hero-eyebrow {
       display: inline-block;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--warm-coral);
-      background: rgba(228,165,138,0.12);
+      color: var(--amber);
+      background: rgba(200,135,60,0.12);
       padding: 0.3rem 0.8rem;
       border-radius: 100px;
       margin-bottom: 1.5rem;
     }
 
     .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-family: 'Lora', serif;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
       font-weight: 700;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      color: var(--deep-graphite);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--forest-night);
       margin-bottom: 1rem;
     }
 
-    .hero h1 span {
-      color: var(--horizon-blue);
+    .hero h1 em {
+      color: var(--canopy);
+      font-style: italic;
     }
 
     .hero-sub {
       font-size: 1.05rem;
-      color: #555;
-      line-height: 1.65;
+      color: #5a6b5d;
+      line-height: 1.7;
       max-width: 560px;
       margin: 0 auto 2.5rem;
       font-weight: 400;
@@ -146,46 +153,47 @@
       display: flex;
       gap: 0;
       background: white;
-      border: 2px solid rgba(76,119,169,0.25);
+      border: 2px solid rgba(46,83,57,0.2);
       border-radius: 16px;
       overflow: hidden;
       transition: border-color 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 20px rgba(76,119,169,0.08);
+      box-shadow: 0 4px 20px rgba(27,46,30,0.08);
     }
 
     .search-inner:focus-within {
-      border-color: var(--horizon-blue);
-      box-shadow: 0 4px 24px rgba(76,119,169,0.18);
+      border-color: var(--canopy);
+      box-shadow: 0 4px 24px rgba(27,46,30,0.14);
     }
 
     .search-icon {
       padding: 0 1rem 0 1.2rem;
       display: flex;
       align-items: center;
-      color: var(--mist-blue);
+      color: var(--canopy);
       font-size: 1.1rem;
       flex-shrink: 0;
+      opacity: 0.6;
     }
 
     #species-input {
       flex: 1;
       border: none;
       outline: none;
-      font-family: 'Figtree', sans-serif;
+      font-family: 'DM Sans', sans-serif;
       font-size: 1rem;
       font-weight: 500;
-      color: var(--deep-graphite);
+      color: var(--forest-night);
       padding: 1rem 0.5rem;
       background: transparent;
     }
 
-    #species-input::placeholder { color: #aaa; font-weight: 400; }
+    #species-input::placeholder { color: #a0a8a2; font-weight: 400; }
 
     #search-btn {
-      background: var(--horizon-blue);
+      background: var(--canopy);
       color: white;
       border: none;
-      font-family: 'Figtree', sans-serif;
+      font-family: 'DM Sans', sans-serif;
       font-size: 0.9rem;
       font-weight: 600;
       padding: 0 1.5rem;
@@ -196,8 +204,8 @@
       border-radius: 10px;
     }
 
-    #search-btn:hover { background: #3d6491; }
-    #search-btn:disabled { background: var(--mist-blue); cursor: not-allowed; }
+    #search-btn:hover { background: var(--forest-night); }
+    #search-btn:disabled { background: #8aaa91; cursor: not-allowed; }
 
     .search-hints {
       margin-top: 0.75rem;
@@ -209,9 +217,9 @@
 
     .hint-chip {
       font-size: 0.78rem;
-      color: var(--horizon-blue);
-      background: var(--blue-light);
-      border: 1px solid rgba(76,119,169,0.2);
+      color: var(--canopy);
+      background: var(--canopy-light);
+      border: 1px solid rgba(46,83,57,0.18);
       padding: 0.25rem 0.7rem;
       border-radius: 100px;
       cursor: pointer;
@@ -219,44 +227,7 @@
       font-weight: 500;
     }
 
-    .hint-chip:hover { background: rgba(76,119,169,0.15); }
-
-    /* AUTOCOMPLETE */
-    #autocomplete-list {
-      position: absolute;
-      top: calc(100% - 0.6rem);
-      left: 0; right: 0;
-      background: white;
-      border: 2px solid var(--horizon-blue);
-      border-top: none;
-      border-radius: 0 0 16px 16px;
-      overflow: hidden;
-      z-index: 50;
-      box-shadow: 0 8px 24px rgba(76,119,169,0.15);
-      display: none;
-    }
-
-    .autocomplete-item {
-      padding: 0.75rem 1.2rem;
-      font-size: 0.92rem;
-      font-weight: 500;
-      color: var(--deep-graphite);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      border-bottom: 1px solid #f0f0ee;
-      transition: background 0.1s;
-    }
-
-    .autocomplete-item:last-child { border-bottom: none; }
-
-    .autocomplete-item:hover, .autocomplete-item.active {
-      background: var(--blue-light);
-      color: var(--horizon-blue);
-    }
-
-    .autocomplete-match { font-weight: 700; color: var(--horizon-blue); }
+    .hint-chip:hover { background: rgba(46,83,57,0.15); }
 
     /* RESULTS AREA */
     #results-area {
@@ -276,8 +247,8 @@
     .loading-spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid var(--blue-light);
-      border-top-color: var(--horizon-blue);
+      border: 3px solid var(--parchment);
+      border-top-color: var(--canopy);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 0 auto 1rem;
@@ -306,9 +277,10 @@
       background: white;
       border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(35,35,35,0.07);
+      box-shadow: 0 4px 24px rgba(27,46,30,0.08);
       margin-bottom: 2rem;
       animation: slideUp 0.4s ease;
+      border: 1px solid rgba(232,213,176,0.5);
     }
 
     @keyframes slideUp {
@@ -318,25 +290,28 @@
 
     .card-header {
       padding: 2rem 2rem 1.5rem;
-      border-bottom: 1px solid #f0f0ee;
+      border-bottom: 1px solid var(--bone-white);
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 1rem;
       flex-wrap: wrap;
+      background: linear-gradient(135deg, white, #fdfbf7);
     }
 
     .card-names h2 {
-      font-size: 1.6rem;
+      font-family: 'Lora', serif;
+      font-size: 1.7rem;
       font-weight: 700;
-      letter-spacing: -0.02em;
-      color: var(--deep-graphite);
-      margin-bottom: 0.2rem;
+      letter-spacing: -0.01em;
+      color: var(--forest-night);
+      margin-bottom: 0.25rem;
     }
 
     .card-names .latin {
+      font-family: 'Lora', serif;
       font-size: 0.95rem;
-      color: #888;
+      color: #7a8c7d;
       font-style: italic;
       font-weight: 400;
     }
@@ -352,6 +327,7 @@
       letter-spacing: 0.02em;
       white-space: nowrap;
       flex-shrink: 0;
+      font-family: 'DM Sans', sans-serif;
     }
 
     .iucn-badge .badge-code {
@@ -378,45 +354,45 @@
 
     .meta-item {
       padding: 1.2rem 2rem;
-      border-right: 1px solid #f0f0ee;
-      border-bottom: 1px solid #f0f0ee;
+      border-right: 1px solid var(--bone-white);
+      border-bottom: 1px solid var(--bone-white);
     }
 
     .meta-item:last-child { border-right: none; }
 
     .meta-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.09em;
       text-transform: uppercase;
-      color: #aaa;
+      color: #9aaa9d;
       margin-bottom: 0.3rem;
     }
 
     .meta-value {
       font-size: 0.95rem;
       font-weight: 600;
-      color: var(--deep-graphite);
+      color: var(--forest-night);
     }
 
-    .trend-up { color: #e74c3c; }
-    .trend-down { color: #27ae60; }
-    .trend-stable { color: var(--horizon-blue); }
+    .trend-up    { color: #27ae60; }
+    .trend-down  { color: #c0392b; }
+    .trend-stable { color: var(--canopy); }
     .trend-unknown { color: #aaa; }
 
-    /* ETHICS PLACEHOLDER */
+    /* ETHICS SECTION */
     .ethics-section {
       padding: 1.5rem 2rem;
-      border-top: 1px solid #f0f0ee;
-      background: linear-gradient(135deg, rgba(76,119,169,0.03), rgba(228,165,138,0.04));
+      border-top: 1px solid var(--bone-white);
+      background: linear-gradient(135deg, rgba(200,135,60,0.04), rgba(232,213,176,0.1));
     }
 
     .ethics-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.09em;
       text-transform: uppercase;
-      color: #aaa;
+      color: var(--amber);
       margin-bottom: 0.8rem;
     }
 
@@ -432,7 +408,7 @@
 
     .ethics-pill {
       background: white;
-      border: 1px solid #eee;
+      border: 1px solid rgba(200,135,60,0.18);
       border-radius: 10px;
       padding: 0.6rem 0.8rem;
       display: flex;
@@ -444,27 +420,28 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #ddd;
+      background: rgba(200,135,60,0.25);
       flex-shrink: 0;
     }
 
     .ethics-pill-label {
       font-size: 0.75rem;
-      color: #888;
+      color: #7a6a55;
       font-weight: 500;
       line-height: 1.3;
     }
 
     .ethics-coming-soon {
       font-size: 0.72rem;
-      color: var(--warm-coral);
-      font-weight: 600;
-      margin-top: 0.5rem;
+      color: var(--amber);
+      font-weight: 500;
+      margin-top: 0.75rem;
+      font-style: italic;
     }
 
     /* MAP */
     .map-section {
-      border-top: 1px solid #f0f0ee;
+      border-top: 1px solid var(--bone-white);
     }
 
     .map-section-header {
@@ -475,20 +452,21 @@
     }
 
     .map-section-title {
-      font-size: 0.8rem;
+      font-size: 0.68rem;
       font-weight: 600;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.09em;
       text-transform: uppercase;
-      color: #aaa;
+      color: #9aaa9d;
     }
 
     .map-source-tag {
       font-size: 0.72rem;
-      color: var(--horizon-blue);
-      background: var(--blue-light);
+      color: var(--canopy);
+      background: var(--canopy-light);
       padding: 0.2rem 0.6rem;
       border-radius: 100px;
       font-weight: 500;
+      border: 1px solid rgba(46,83,57,0.15);
     }
 
     #species-map {
@@ -501,8 +479,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--blue-light);
-      color: #888;
+      background: var(--bone-white);
+      color: #9aaa9d;
       font-size: 0.9rem;
       gap: 0.5rem;
     }
@@ -510,66 +488,69 @@
     /* HABITAT */
     .habitat-section {
       padding: 1.5rem 2rem;
-      border-top: 1px solid #f0f0ee;
+      border-top: 1px solid var(--bone-white);
     }
 
     .habitat-section h3 {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.09em;
       text-transform: uppercase;
-      color: #aaa;
+      color: #9aaa9d;
       margin-bottom: 0.6rem;
     }
 
     .habitat-text {
       font-size: 0.92rem;
-      line-height: 1.65;
-      color: #555;
+      line-height: 1.7;
+      color: #4a5e4d;
     }
 
     /* FOOTER */
     footer {
-      background: var(--deep-graphite);
-      color: rgba(255,255,255,0.5);
+      background: var(--forest-night);
+      color: rgba(232,213,176,0.5);
       text-align: center;
       padding: 2rem;
       font-size: 0.8rem;
     }
 
-    footer a { color: var(--mist-blue); text-decoration: none; }
+    footer a { color: var(--parchment); text-decoration: none; opacity: 0.8; }
+    footer a:hover { opacity: 1; }
 
     footer .footer-logo {
+      font-family: 'Lora', serif;
       font-size: 1rem;
       font-weight: 700;
-      color: white;
+      color: var(--bone-white);
       margin-bottom: 0.4rem;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
     }
 
     /* ABOUT STRIP */
     .about-strip {
-      background: var(--blue-light);
-      border-top: 1px solid rgba(76,119,169,0.15);
-      padding: 3rem 2rem;
+      background: var(--canopy);
+      border-top: 1px solid rgba(200,135,60,0.2);
+      padding: 3.5rem 2rem;
       text-align: center;
       margin-top: 2rem;
     }
 
     .about-strip h2 {
-      font-size: 1.3rem;
+      font-family: 'Lora', serif;
+      font-size: 1.5rem;
       font-weight: 700;
-      color: var(--deep-graphite);
-      margin-bottom: 0.5rem;
-      letter-spacing: -0.02em;
+      color: var(--bone-white);
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
     }
 
     .about-strip p {
-      font-size: 0.9rem;
-      color: #666;
+      font-size: 0.92rem;
+      color: rgba(247,244,238,0.75);
       max-width: 520px;
       margin: 0 auto;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     .pillars {
@@ -577,30 +558,31 @@
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 1rem;
       max-width: 800px;
-      margin: 2rem auto 0;
+      margin: 2.5rem auto 0;
     }
 
     .pillar {
-      background: white;
+      background: rgba(27,46,30,0.5);
       border-radius: 14px;
-      padding: 1.2rem;
+      padding: 1.4rem;
       text-align: left;
-      border: 1px solid rgba(76,119,169,0.1);
+      border: 1px solid rgba(200,135,60,0.2);
     }
 
-    .pillar-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .pillar-icon { font-size: 1.4rem; margin-bottom: 0.6rem; }
 
     .pillar h3 {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--deep-graphite);
-      margin-bottom: 0.3rem;
+      font-family: 'Lora', serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--bone-white);
+      margin-bottom: 0.4rem;
     }
 
     .pillar p {
       font-size: 0.78rem;
-      color: #888;
-      line-height: 1.5;
+      color: rgba(247,244,238,0.6);
+      line-height: 1.55;
       max-width: none;
       margin: 0;
     }
@@ -613,12 +595,12 @@
       <div class="nav-logo-mark">🦅</div>
       <span class="nav-logo-text">Fauna</span>
     </a>
-    <span class="nav-tagline">Ethical wildlife watching, worldwide</span>
+    <span class="nav-tagline">Wildlife worth watching.</span>
   </nav>
 
   <section class="hero">
     <span class="hero-eyebrow">Now in prototype</span>
-    <h1>Find wildlife<br><span>worth watching</span></h1>
+    <h1>Find wildlife<br><em>worth watching.</em></h1>
     <p class="hero-sub">Search any species to see its conservation status, global range, and whether experiences to see it in the wild are genuinely ethical.</p>
 
     <div class="search-wrap">
@@ -633,7 +615,6 @@
         />
         <button id="search-btn">Search</button>
       </div>
-      <div id="autocomplete-list"></div>
       <div class="search-hints">
         <span class="hint-chip" data-query="Snow Leopard">Snow Leopard</span>
         <span class="hint-chip" data-query="Mountain Gorilla">Mountain Gorilla</span>
@@ -685,7 +666,7 @@
       </div>
 
       <div class="habitat-section" id="habitat-section" style="display:none">
-        <h3>Habitat</h3>
+        <h3>Habitat &amp; status</h3>
         <p class="habitat-text" id="habitat-text"></p>
       </div>
 
@@ -727,7 +708,7 @@
   </section>
 
   <section class="about-strip">
-    <h2>Wildlife watching, done right</h2>
+    <h2>Wildlife watching, done right.</h2>
     <p>Fauna is being built to give wildlife travellers the one thing that doesn't exist yet: a single place to find what's out there, where to go, and whether the experience is genuinely good for the animals involved.</p>
     <div class="pillars">
       <div class="pillar">
@@ -761,145 +742,60 @@
 
   <script>
     const IUCN_STATUS = {
-      EX:  { label: 'Extinct',              cls: 'status-EX' },
-      EW:  { label: 'Extinct in the Wild',  cls: 'status-EW' },
-      CR:  { label: 'Critically Endangered',cls: 'status-CR' },
-      EN:  { label: 'Endangered',           cls: 'status-EN' },
-      VU:  { label: 'Vulnerable',           cls: 'status-VU' },
-      NT:  { label: 'Near Threatened',      cls: 'status-NT' },
-      LC:  { label: 'Least Concern',        cls: 'status-LC' },
-      DD:  { label: 'Data Deficient',       cls: 'status-DD' },
-      NE:  { label: 'Not Evaluated',        cls: 'status-NE' },
+      EX:  { label: 'Extinct',               cls: 'status-EX' },
+      EW:  { label: 'Extinct in the Wild',   cls: 'status-EW' },
+      CR:  { label: 'Critically Endangered', cls: 'status-CR' },
+      EN:  { label: 'Endangered',            cls: 'status-EN' },
+      VU:  { label: 'Vulnerable',            cls: 'status-VU' },
+      NT:  { label: 'Near Threatened',       cls: 'status-NT' },
+      LC:  { label: 'Least Concern',         cls: 'status-LC' },
+      DD:  { label: 'Data Deficient',        cls: 'status-DD' },
+      NE:  { label: 'Not Evaluated',         cls: 'status-NE' },
     };
 
-    const TREND_MAP = {
+    // Priority 2 fix: normalise all known IUCN API population trend response patterns
+    function normaliseTrend(raw) {
+      if (!raw) return 'Unknown';
+      // Handle object with description field (v4 API)
+      const val = (typeof raw === 'object' && raw !== null)
+        ? (raw.description || raw.name || raw.code || '')
+        : String(raw);
+      const v = val.trim().toLowerCase();
+      if (v === 'decreasing' || v === 'decrease' || v === 'declining')  return 'Decreasing';
+      if (v === 'increasing' || v === 'increase' || v === 'increasing')  return 'Increasing';
+      if (v === 'stable' || v === 'stable/increasing' || v === 'stable/decreasing') return 'Stable';
+      if (v === 'unknown' || v === '' || v === 'not known') return 'Unknown';
+      // Return capitalised as fallback so at least something shows
+      return val.charAt(0).toUpperCase() + val.slice(1);
+    }
+
+    const TREND_DISPLAY = {
       Decreasing: { label: '↓ Decreasing', cls: 'trend-down' },
       Increasing: { label: '↑ Increasing', cls: 'trend-up' },
       Stable:     { label: '→ Stable',     cls: 'trend-stable' },
       Unknown:    { label: 'Unknown',       cls: 'trend-unknown' },
     };
 
-    // Full list of searchable species names for autocomplete
-    const SPECIES_NAMES = [
-      'African Elephant', 'African Forest Elephant', 'African Penguin', 'African Wild Dog',
-      'Asian Elephant', 'Beluga Whale', 'Black Rhino', 'Black Rhinoceros',
-      'Blue Whale', 'Bonobo', 'Bornean Orangutan', 'Bottlenose Dolphin',
-      'Brown Bear', 'California Condor', 'Cheetah', 'Chimpanzee',
-      'Chinese Giant Salamander', 'Clouded Leopard', 'Dugong', 'Emperor Penguin',
-      'Fin Whale', 'Gharial', 'Giant Anteater', 'Giant Panda',
-      'Giraffe', 'Gorilla', 'Great White Shark', 'Greater One-Horned Rhinoceros',
-      'Green Sea Turtle', 'Grevy\'s Zebra', 'Grey Wolf', 'Grizzly Bear',
-      'Hammerhead Shark', 'Harpy Eagle', 'Hawksbill Turtle', 'Hippopotamus',
-      'Humpback Whale', 'Hyacinth Macaw', 'Indian Rhino', 'Japanese Macaque',
-      'Jaguar', 'Javan Rhino', 'Kakapo', 'Killer Whale',
-      'Komodo Dragon', 'Leatherback Turtle', 'Leopard', 'Lion',
-      'Loggerhead Turtle', 'Maned Wolf', 'Manta Ray', 'Manatee',
-      'Mountain Gorilla', 'Mountain Zebra', 'Narwhal', 'Numbat',
-      'Okapi', 'Orangutan', 'Orca', 'Painted Dog',
-      'Pangolin', 'Philippine Eagle', 'Platypus', 'Polar Bear',
-      'Proboscis Monkey', 'Pygmy Hippo', 'Quoll', 'Red Panda',
-      'Red Wolf', 'Right Whale', 'Saiga', 'Saltwater Crocodile',
-      'Snow Leopard', 'Snow Monkey', 'Spectacled Bear', 'Sperm Whale',
-      'Spix\'s Macaw', 'Sun Bear', 'Sumatran Orangutan', 'Sumatran Rhino',
-      'Sunda Pangolin', 'Tasmanian Devil', 'Tiger', 'Wandering Albatross',
-      'Whale Shark', 'Western Gorilla', 'White Rhino', 'White Rhinoceros',
-      'Wild Bactrian Camel', 'Wolf',
-    ].sort();
-
     let map = null;
     let markersLayer = null;
-    let activeIndex = -1;
 
     const input = document.getElementById('species-input');
     const btn = document.getElementById('search-btn');
     const loading = document.getElementById('loading');
     const errorBox = document.getElementById('error-box');
     const resultsArea = document.getElementById('results-area');
-    const autocompleteList = document.getElementById('autocomplete-list');
-
-    // Autocomplete
-    function showAutocomplete(query) {
-      if (!query || query.length < 2) {
-        autocompleteList.style.display = 'none';
-        return;
-      }
-      const q = query.toLowerCase();
-      const matches = SPECIES_NAMES.filter(n => n.toLowerCase().includes(q)).slice(0, 6);
-      if (matches.length === 0) {
-        autocompleteList.style.display = 'none';
-        return;
-      }
-      autocompleteList.innerHTML = matches.map((name, i) => {
-        // Bold the matching part
-        const idx = name.toLowerCase().indexOf(q);
-        const before = name.slice(0, idx);
-        const match = name.slice(idx, idx + q.length);
-        const after = name.slice(idx + q.length);
-        return `<div class="autocomplete-item" data-index="${i}" data-name="${name}">
-          🐾 ${before}<span class="autocomplete-match">${match}</span>${after}
-        </div>`;
-      }).join('');
-      autocompleteList.style.display = 'block';
-      activeIndex = -1;
-
-      autocompleteList.querySelectorAll('.autocomplete-item').forEach(item => {
-        item.addEventListener('mousedown', e => {
-          e.preventDefault();
-          input.value = item.dataset.name;
-          autocompleteList.style.display = 'none';
-          doSearch();
-        });
-      });
-    }
-
-    input.addEventListener('input', () => showAutocomplete(input.value));
-
-    input.addEventListener('blur', () => {
-      setTimeout(() => { autocompleteList.style.display = 'none'; }, 150);
-    });
-
-    input.addEventListener('focus', () => {
-      if (input.value.length >= 2) showAutocomplete(input.value);
-    });
-
-    // Keyboard navigation for autocomplete
-    input.addEventListener('keydown', e => {
-      const items = autocompleteList.querySelectorAll('.autocomplete-item');
-      if (autocompleteList.style.display === 'block' && items.length > 0) {
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          activeIndex = Math.min(activeIndex + 1, items.length - 1);
-          items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
-          return;
-        }
-        if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          activeIndex = Math.max(activeIndex - 1, -1);
-          items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
-          return;
-        }
-        if (e.key === 'Enter' && activeIndex >= 0) {
-          e.preventDefault();
-          input.value = items[activeIndex].dataset.name;
-          autocompleteList.style.display = 'none';
-          doSearch();
-          return;
-        }
-        if (e.key === 'Escape') {
-          autocompleteList.style.display = 'none';
-          return;
-        }
-      }
-      if (e.key === 'Enter') doSearch();
-    });
 
     // Hint chips
     document.querySelectorAll('.hint-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         input.value = chip.dataset.query;
-        autocompleteList.style.display = 'none';
         doSearch();
       });
+    });
+
+    // Enter key
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doSearch();
     });
 
     btn.addEventListener('click', doSearch);
@@ -929,92 +825,72 @@
       showLoading();
       resultsArea.style.display = 'none';
 
-      let data;
       try {
         const res = await fetch(`/api/iucn?species=${encodeURIComponent(query)}`);
-        data = await res.json();
+        const data = await res.json();
 
         if (!res.ok) {
           if (res.status === 404) {
-            showError(`No species found for "${query}". Try a name from the suggestions list.`);
+            showError(`No species found for "${query}". Try using the scientific name (e.g. "Panthera uncia") or check the spelling.`);
           } else {
             showError(data.error || 'Something went wrong fetching species data.');
           }
           return;
         }
-      } catch (err) {
-        showError('Could not reach the Fauna API. Please check your connection and try again.');
-        return;
-      }
 
-      try {
-        renderCard(data, query);
+        renderCard(data);
         loadiNatSightings(query);
         hideLoading();
         resultsArea.style.display = 'block';
         resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
       } catch (err) {
-        console.error('Render error:', err);
-        showError('Species data received but could not be displayed. Error: ' + err.message);
+        showError('Could not reach the Fauna API. Please try again.');
       }
     }
 
-    function renderCard(data, query) {
+    function renderCard(data) {
+      // Names
       const taxon = data.taxon || {};
-      const scientificName = String(taxon.scientific_name || '');
-
-      // Display name: use what the user searched, capitalised
-      let displayName = query || '';
-      if (!displayName) {
-        const commonNames = Array.isArray(taxon.common_names) ? taxon.common_names : [];
-        const englishName = commonNames.find(n => n && n.language === 'eng') || commonNames[0];
-        displayName = (englishName && englishName.name) ? englishName.name : (scientificName || 'Unknown species');
-      }
-      displayName = displayName.replace(/\b\w/g, l => l.toUpperCase());
+      const commonNames = taxon.common_names || [];
+      const englishName = commonNames.find(n => n.language === 'eng') || commonNames[0];
+      const displayName = englishName ? englishName.name : (taxon.scientific_name || 'Unknown species');
+      const scientificName = taxon.scientific_name || '';
 
       document.getElementById('common-name').textContent = displayName;
       document.getElementById('latin-name').textContent = scientificName;
 
       // IUCN status
       const category = data.red_list_category || {};
-      const code = String(category.code || 'NE');
+      const code = category.code || 'NE';
       const statusInfo = IUCN_STATUS[code] || IUCN_STATUS['NE'];
       const badge = document.getElementById('iucn-badge');
-      badge.className = 'iucn-badge ' + statusInfo.cls;
+      badge.className = `iucn-badge ${statusInfo.cls}`;
       document.getElementById('status-code').textContent = code;
       document.getElementById('status-label').textContent = statusInfo.label;
 
-      // Population trend
-      let trendCode = 'Unknown';
-      const pt = data.population_trend;
-      if (pt) {
-        if (typeof pt === 'string') {
-          trendCode = pt;
-        } else if (typeof pt === 'object') {
-          trendCode = pt.description || pt.name || pt.code || pt.title || 'Unknown';
-        }
-      }
-      if (typeof trendCode !== 'string') trendCode = 'Unknown';
-      const trendNorm = trendCode.charAt(0).toUpperCase() + trendCode.slice(1).toLowerCase();
-      const trendInfo = TREND_MAP[trendNorm] || TREND_MAP[trendCode] || { label: trendCode, cls: 'trend-unknown' };
+      // Population trend — Priority 2 fix applied here
+      const rawTrend = data.population_trend;
+      const trendKey = normaliseTrend(rawTrend);
+      const trendInfo = TREND_DISPLAY[trendKey] || { label: trendKey, cls: 'trend-unknown' };
       const trendEl = document.getElementById('pop-trend');
       trendEl.textContent = trendInfo.label;
-      trendEl.className = 'meta-value ' + trendInfo.cls;
+      trendEl.className = `meta-value ${trendInfo.cls}`;
 
       // Taxonomy
-      document.getElementById('kingdom').textContent = String(taxon.kingdom_name || '—');
-      document.getElementById('class-name').textContent = String(taxon.class_name || '—');
+      document.getElementById('kingdom').textContent = taxon.kingdom_name || '—';
+      document.getElementById('class-name').textContent = taxon.class_name || '—';
 
       // Year assessed
-      const year = data.year_published || (data.assessment_date ? data.assessment_date.slice(0, 4) : null) || '—';
-      document.getElementById('last-assessed').textContent = String(year);
+      const year = data.year_published || data.assessment_date || '—';
+      document.getElementById('last-assessed').textContent = year;
 
-      // Habitat / rationale
+      // Habitat / rationale text
       const rationale = data.rationale || data.habitat || '';
       const habitatSection = document.getElementById('habitat-section');
-      if (rationale && typeof rationale === 'string') {
+      if (rationale) {
         const clean = rationale.replace(/<[^>]*>/g, '').trim();
-        const truncated = clean.length > 400 ? clean.substring(0, 400) + '...' : clean;
+        const truncated = clean.length > 500 ? clean.substring(0, 500) + '...' : clean;
         document.getElementById('habitat-text').textContent = truncated;
         habitatSection.style.display = 'block';
       } else {
@@ -1037,11 +913,7 @@
         mapLoading.style.display = 'none';
         mapContainer.style.display = 'block';
 
-        // Init or reset map
-        if (map) {
-          map.remove();
-          map = null;
-        }
+        if (map) { map.remove(); map = null; }
 
         map = L.map('species-map', { scrollWheelZoom: false }).setView([20, 0], 2);
 
@@ -1077,20 +949,20 @@
 
           const circle = L.circleMarker([lat, lng], {
             radius: 6,
-            fillColor: '#4C77A9',
+            fillColor: '#C8873C',
             color: '#fff',
             weight: 1.5,
             opacity: 1,
-            fillOpacity: 0.75,
+            fillOpacity: 0.8,
           });
 
           const date = obs.observed_on || 'Date unknown';
           const place = obs.place_guess || 'Location unknown';
           circle.bindPopup(`
-            <div style="font-family:Figtree,sans-serif;font-size:0.85rem;min-width:140px">
-              <strong style="color:#232323">${speciesName}</strong><br>
-              <span style="color:#888">${place}</span><br>
-              <span style="color:#4C77A9;font-size:0.78rem">${date}</span>
+            <div style="font-family:'DM Sans',sans-serif;font-size:0.85rem;min-width:140px">
+              <strong style="color:#1B2E1E">${speciesName}</strong><br>
+              <span style="color:#7a8c7d">${place}</span><br>
+              <span style="color:#C8873C;font-size:0.78rem">${date}</span>
             </div>
           `);
 
@@ -1101,11 +973,10 @@
           map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
         }
 
-        // Sighting count badge
         const countCtrl = L.control({ position: 'bottomleft' });
         countCtrl.onAdd = function() {
           const div = L.DomUtil.create('div');
-          div.style.cssText = 'background:white;padding:6px 10px;border-radius:8px;font-size:0.78rem;color:#4C77A9;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.1);font-family:Figtree,sans-serif';
+          div.style.cssText = "background:white;padding:6px 10px;border-radius:8px;font-size:0.78rem;color:#2E5339;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.1);font-family:'DM Sans',sans-serif;border:1px solid rgba(46,83,57,0.15)";
           div.textContent = `${observations.length} verified sightings`;
           return div;
         };
@@ -1115,7 +986,7 @@
         mapLoading.style.display = 'none';
         mapContainer.style.display = 'block';
         if (!map) {
-          map = L.map('species-map').setView([20, 0], 2);
+          map = L.map('species-map', { scrollWheelZoom: false }).setView([20, 0], 2);
           L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap, © CARTO',
           }).addTo(map);
