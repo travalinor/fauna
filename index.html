@@ -229,6 +229,45 @@
 
     .hint-chip:hover { background: rgba(46,83,57,0.15); }
 
+    /* AUTOCOMPLETE */
+    .autocomplete-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1.5px solid rgba(46,83,57,0.2);
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(27,46,30,0.12);
+      z-index: 200;
+      overflow: hidden;
+      display: none;
+    }
+
+    .autocomplete-item {
+      padding: 0.75rem 1.2rem;
+      font-size: 0.95rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--forest-night);
+      cursor: pointer;
+      border-bottom: 1px solid var(--bone-white);
+      transition: background 0.1s;
+    }
+
+    .autocomplete-item:last-child { border-bottom: none; }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+      background: var(--canopy-light);
+      color: var(--canopy);
+    }
+
+    .autocomplete-item mark {
+      background: none;
+      color: var(--amber);
+      font-weight: 600;
+    }
+
     /* RESULTS AREA */
     #results-area {
       max-width: 1100px;
@@ -615,6 +654,7 @@
         />
         <button id="search-btn">Search</button>
       </div>
+      <div id="autocomplete-list" class="autocomplete-list"></div>
       <div class="search-hints">
         <span class="hint-chip" data-query="Snow Leopard">Snow Leopard</span>
         <span class="hint-chip" data-query="Mountain Gorilla">Mountain Gorilla</span>
@@ -776,6 +816,129 @@
       Unknown:    { label: 'Unknown',       cls: 'trend-unknown' },
     };
 
+    // Common names for autocomplete — mirrors the lookup table in iucn.js
+    const SPECIES_LIST = [
+      'African Buffalo','African Elephant','African Lion','African Penguin','African Wild Dog',
+      'African Wild Ass','Aardvark','Aardwolf','Albatross','Aldabra Tortoise',
+      'Alpine Ibex','Amazon Manatee','Amazon River Dolphin','American Bison','American Black Bear',
+      'American Crocodile','Amur Leopard','Amur Tiger','Andean Bear','Andean Condor',
+      'Atlantic Puffin','Axolotl','Aye-aye','Babirusa','Bald Eagle',
+      'Banteng','Barn Owl','Basking Shark','Bearded Vulture','Beluga Whale',
+      'Bengal Tiger','Bighorn Sheep','Binturong','Bird of Paradise','Blue Poison Dart Frog',
+      'Blue Whale','Bluefin Tuna','Bonobo','Bornean Orangutan','Bottlenose Dolphin',
+      'Bowhead Whale','Brown Bear','California Condor','Californian Sea Lion','Canada Lynx',
+      'Cape Buffalo','Capercaillie','Capybara','Caracal','Caribou',
+      'Cheetah','Chinese Giant Salamander','Chinese Pangolin','Chimpanzee','Chinstrap Penguin',
+      'Chiru','Clouded Leopard','Common Dolphin','Common Hippopotamus','Common Kingfisher',
+      'Common Seal','Common Swift','Corncrake','Cougar','Coyote',
+      'Curlew','Dugong','Dhole','Eastern Gorilla','Emperor Penguin',
+      'Emu','Ethiopian Wolf','Eurasian Curlew','Eurasian Lynx','European Bison',
+      'European Otter','Fairy Penguin','Fallow Deer','Fennec Fox','Fin Whale',
+      'Fishing Cat','Flamingo','Flatback Turtle','Forest Elephant','Fur Seal',
+      'Gannet','Galapagos Iguana','Galapagos Penguin','Galapagos Sea Lion','Galapagos Tortoise',
+      'Ganges River Dolphin','Gaur','Gelada','Gemsbok','Gentoo Penguin',
+      'Gharial','Giant Anteater','Giant Armadillo','Giant Flying Squirrel','Giant Grouper',
+      'Giant Manta Ray','Giant Otter','Giant Panda','Gila Monster','Giraffe',
+      'GNU','Golden Poison Frog','Goliath Frog','Great White Shark','Greater Flamingo',
+      'Greater One-horned Rhinoceros','Grey Seal','Grey Whale','Grizzly Bear','Hammerhead Shark',
+      'Harpy Eagle','Hawaiian Monk Seal','Hawksbill Turtle','Hellbender','Hippopotamus',
+      'Humpback Whale','Hyacinth Macaw','Iberian Lynx','Impala','Indian Elephant',
+      'Indian Rhinoceros','Indri','Irrawaddy Dolphin','Jabiru','Jaguar',
+      'Japanese Crane','Javan Rhinoceros','Kakapo','Kemp's Ridley Turtle','King Cobra',
+      'King Penguin','Kingfisher','Kiwi','Komodo Dragon','Kudu',
+      'Lammergeier','Lapwing','Leatherback Turtle','Leopard','Leopard Seal',
+      'Lion','Little Penguin','Loggerhead Turtle','Macaroni Penguin','Malayan Tapir',
+      'Mandrill','Manatee','Maned Wolf','Manta Ray','Marabou Stork',
+      'Markhor','Marine Iguana','Mediterranean Monk Seal','Minke Whale','Monk Seal',
+      'Moose','Mountain Chicken','Mountain Gorilla','Mountain Goat','Mountain Zebra',
+      'Mugger Crocodile','Musk Ox','Narwhal','Nile Crocodile','North Atlantic Right Whale',
+      'Northern Gannet','Numbat','Ocelot','Olive Ridley Turtle','Orca',
+      'Oryx','Osprey','Ostrich','Painted Dog','Pangolin',
+      'Peregrine Falcon','Philippine Eagle','Pink River Dolphin','Plains Zebra','Platypus',
+      'Polar Bear','Proboscis Monkey','Proboscis Monkey','Puffin','Puma',
+      'Pygmy Hippopotamus','Python','Quoll','Red Deer','Red Kite',
+      'Red Panda','Red-crowned Crane','Reindeer','Resplendent Quetzal','Ring-tailed Lemur',
+      'Risso's Dolphin','Roan Antelope','Roe Deer','Sable Antelope','Saiga',
+      'Saker Falcon','Saltwater Crocodile','Saola','Sarus Crane','Sawfish',
+      'Scarlet Macaw','Sea Otter','Secretary Bird','Serval','Sei Whale',
+      'Shoebill','Siamang','Skylark','Sloth Bear','Snow Leopard',
+      'Southern Cassowary','Southern Right Whale','Spectacled Bear','Sperm Whale',
+      'Spinner Dolphin','Spotted Hyena','Steller Sea Lion','Steller's Sea Eagle','Sun Bear',
+      'Sunda Clouded Leopard','Sunda Pangolin','Sumatran Elephant','Sumatran Orangutan',
+      'Sumatran Rhinoceros','Swift','Takin','Tapanuli Orangutan','Tasmanian Devil',
+      'Tiger','Tiger Shark','Tibetan Antelope','Vaquita','Walrus',
+      'Wandering Albatross','Weddell Seal','West Indian Manatee','Western Gorilla','Whale Shark',
+      'White Rhinoceros','White-tailed Eagle','Whooping Crane','Wildebeest','Wisent',
+      'Wolverine','Wombat','Zebra'
+    ].sort();
+
+    // Autocomplete logic
+    const acList = document.getElementById('autocomplete-list');
+    let acIndex = -1;
+
+    function showAutocomplete(matches) {
+      acList.innerHTML = '';
+      acIndex = -1;
+      if (matches.length === 0) { acList.style.display = 'none'; return; }
+      matches.forEach((name, i) => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        // Highlight matching portion
+        const q = input.value.trim();
+        const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+        item.innerHTML = name.replace(re, '<mark>$1</mark>');
+        item.addEventListener('mousedown', e => {
+          e.preventDefault();
+          input.value = name;
+          acList.style.display = 'none';
+          doSearch();
+        });
+        acList.appendChild(item);
+      });
+      acList.style.display = 'block';
+    }
+
+    function closeAutocomplete() {
+      acList.style.display = 'none';
+      acIndex = -1;
+    }
+
+    input.addEventListener('input', () => {
+      const q = input.value.trim();
+      if (q.length < 2) { closeAutocomplete(); return; }
+      const matches = SPECIES_LIST
+        .filter(s => s.toLowerCase().includes(q.toLowerCase()))
+        .slice(0, 6);
+      showAutocomplete(matches);
+    });
+
+    input.addEventListener('keydown', e => {
+      const items = acList.querySelectorAll('.autocomplete-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        acIndex = Math.min(acIndex + 1, items.length - 1);
+        items.forEach((el, i) => el.classList.toggle('active', i === acIndex));
+        if (items[acIndex]) input.value = items[acIndex].textContent;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        acIndex = Math.max(acIndex - 1, -1);
+        items.forEach((el, i) => el.classList.toggle('active', i === acIndex));
+        if (acIndex >= 0 && items[acIndex]) input.value = items[acIndex].textContent;
+      } else if (e.key === 'Escape') {
+        closeAutocomplete();
+      } else if (e.key === 'Enter') {
+        if (acIndex >= 0 && items[acIndex]) {
+          input.value = items[acIndex].textContent;
+          closeAutocomplete();
+        }
+        doSearch();
+      }
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.search-wrap')) closeAutocomplete();
+    });
+
     let map = null;
     let markersLayer = null;
 
@@ -791,11 +954,6 @@
         input.value = chip.dataset.query;
         doSearch();
       });
-    });
-
-    // Enter key
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') doSearch();
     });
 
     btn.addEventListener('click', doSearch);
