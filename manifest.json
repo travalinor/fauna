@@ -1,19 +1,19 @@
 {
   "name": "Fauna",
   "short_name": "Fauna",
-  "description": "Find wildlife worth watching",
+  "description": "Wildlife worth watching.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAFAF7",
-  "theme_color": "#4C77A9",
+  "background_color": "#F7F4EE",
+  "theme_color": "#1B2E1E",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192/4C77A9/FAFAF7?text=F",
+      "src": "https://via.placeholder.com/192x192/1B2E1E/F7F4EE?text=F",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://via.placeholder.com/512x512/4C77A9/FAFAF7?text=F",
+      "src": "https://via.placeholder.com/512x512/1B2E1E/F7F4EE?text=F",
       "sizes": "512x512",
       "type": "image/png"
     }
