@@ -1030,8 +1030,9 @@
     // -------------------------------------------------------------------------
     // Render species card
     // -------------------------------------------------------------------------
-    function renderCard(data) {
-      const taxon = data.taxon || {};
+function renderCard(data) {
+  errorBox.style.display = 'none';
+  const taxon = data.taxon || {};
       const commonNames = taxon.common_names || [];
       const englishName = commonNames.find(n => n.language === 'eng') || commonNames[0];
       const displayName = englishName ? englishName.name : (taxon.scientific_name || 'Unknown species');
