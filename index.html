@@ -781,6 +781,19 @@
   </footer>
 
   <script>
+    // -------------------------------------------------------------------------
+    // DOM references — declared first so all event listeners can use them
+    // -------------------------------------------------------------------------
+    const input      = document.getElementById('species-input');
+    const btn        = document.getElementById('search-btn');
+    const loading    = document.getElementById('loading');
+    const errorBox   = document.getElementById('error-box');
+    const resultsArea = document.getElementById('results-area');
+    const acList     = document.getElementById('autocomplete-list');
+
+    // -------------------------------------------------------------------------
+    // IUCN status map
+    // -------------------------------------------------------------------------
     const IUCN_STATUS = {
       EX:  { label: 'Extinct',               cls: 'status-EX' },
       EW:  { label: 'Extinct in the Wild',   cls: 'status-EW' },
@@ -793,19 +806,19 @@
       NE:  { label: 'Not Evaluated',         cls: 'status-NE' },
     };
 
-    // Priority 2 fix: normalise all known IUCN API population trend response patterns
+    // -------------------------------------------------------------------------
+    // Population trend normalisation
+    // -------------------------------------------------------------------------
     function normaliseTrend(raw) {
       if (!raw) return 'Unknown';
-      // Handle object with description field (v4 API)
       const val = (typeof raw === 'object' && raw !== null)
         ? (raw.description || raw.name || raw.code || '')
         : String(raw);
       const v = val.trim().toLowerCase();
-      if (v === 'decreasing' || v === 'decrease' || v === 'declining')  return 'Decreasing';
-      if (v === 'increasing' || v === 'increase' || v === 'increasing')  return 'Increasing';
+      if (v === 'decreasing' || v === 'decline' || v === 'declining')  return 'Decreasing';
+      if (v === 'increasing' || v === 'increase')                       return 'Increasing';
       if (v === 'stable' || v === 'stable/increasing' || v === 'stable/decreasing') return 'Stable';
-      if (v === 'unknown' || v === '' || v === 'not known') return 'Unknown';
-      // Return capitalised as fallback so at least something shows
+      if (v === 'unknown' || v === '' || v === 'not known')             return 'Unknown';
       return val.charAt(0).toUpperCase() + val.slice(1);
     }
 
@@ -816,7 +829,9 @@
       Unknown:    { label: 'Unknown',       cls: 'trend-unknown' },
     };
 
-    // Common names for autocomplete — mirrors the lookup table in iucn.js
+    // -------------------------------------------------------------------------
+    // Species list for autocomplete
+    // -------------------------------------------------------------------------
     const SPECIES_LIST = [
       'African Buffalo','African Elephant','African Lion','African Penguin','African Wild Dog',
       'African Wild Ass','Aardvark','Aardwolf','Albatross','Aldabra Tortoise',
@@ -844,7 +859,7 @@
       'Harpy Eagle','Hawaiian Monk Seal','Hawksbill Turtle','Hellbender','Hippopotamus',
       'Humpback Whale','Hyacinth Macaw','Iberian Lynx','Impala','Indian Elephant',
       'Indian Rhinoceros','Indri','Irrawaddy Dolphin','Jabiru','Jaguar',
-      'Japanese Crane','Javan Rhinoceros','Kakapo','Kemp's Ridley Turtle','King Cobra',
+      'Japanese Crane','Javan Rhinoceros','Kakapo','Kemp\'s Ridley Turtle','King Cobra',
       'King Penguin','Kingfisher','Kiwi','Komodo Dragon','Kudu',
       'Lammergeier','Lapwing','Leatherback Turtle','Leopard','Leopard Seal',
       'Lion','Little Penguin','Loggerhead Turtle','Macaroni Penguin','Malayan Tapir',
@@ -855,15 +870,15 @@
       'Northern Gannet','Numbat','Ocelot','Olive Ridley Turtle','Orca',
       'Oryx','Osprey','Ostrich','Painted Dog','Pangolin',
       'Peregrine Falcon','Philippine Eagle','Pink River Dolphin','Plains Zebra','Platypus',
-      'Polar Bear','Proboscis Monkey','Proboscis Monkey','Puffin','Puma',
+      'Polar Bear','Proboscis Monkey','Puffin','Puma',
       'Pygmy Hippopotamus','Python','Quoll','Red Deer','Red Kite',
       'Red Panda','Red-crowned Crane','Reindeer','Resplendent Quetzal','Ring-tailed Lemur',
-      'Risso's Dolphin','Roan Antelope','Roe Deer','Sable Antelope','Saiga',
+      'Risso\'s Dolphin','Roan Antelope','Roe Deer','Sable Antelope','Saiga',
       'Saker Falcon','Saltwater Crocodile','Saola','Sarus Crane','Sawfish',
       'Scarlet Macaw','Sea Otter','Secretary Bird','Serval','Sei Whale',
       'Shoebill','Siamang','Skylark','Sloth Bear','Snow Leopard',
       'Southern Cassowary','Southern Right Whale','Spectacled Bear','Sperm Whale',
-      'Spinner Dolphin','Spotted Hyena','Steller Sea Lion','Steller's Sea Eagle','Sun Bear',
+      'Spinner Dolphin','Spotted Hyena','Steller Sea Lion','Steller\'s Sea Eagle','Sun Bear',
       'Sunda Clouded Leopard','Sunda Pangolin','Sumatran Elephant','Sumatran Orangutan',
       'Sumatran Rhinoceros','Swift','Takin','Tapanuli Orangutan','Tasmanian Devil',
       'Tiger','Tiger Shark','Tibetan Antelope','Vaquita','Walrus',
@@ -872,18 +887,18 @@
       'Wolverine','Wombat','Zebra'
     ].sort();
 
-    // Autocomplete logic
-    const acList = document.getElementById('autocomplete-list');
+    // -------------------------------------------------------------------------
+    // Autocomplete
+    // -------------------------------------------------------------------------
     let acIndex = -1;
 
     function showAutocomplete(matches) {
       acList.innerHTML = '';
       acIndex = -1;
       if (matches.length === 0) { acList.style.display = 'none'; return; }
-      matches.forEach((name, i) => {
+      matches.forEach(name => {
         const item = document.createElement('div');
         item.className = 'autocomplete-item';
-        // Highlight matching portion
         const q = input.value.trim();
         const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
         item.innerHTML = name.replace(re, '<mark>$1</mark>');
@@ -939,16 +954,15 @@
       if (!e.target.closest('.search-wrap')) closeAutocomplete();
     });
 
+    // -------------------------------------------------------------------------
+    // Map state
+    // -------------------------------------------------------------------------
     let map = null;
     let markersLayer = null;
 
-    const input = document.getElementById('species-input');
-    const btn = document.getElementById('search-btn');
-    const loading = document.getElementById('loading');
-    const errorBox = document.getElementById('error-box');
-    const resultsArea = document.getElementById('results-area');
-
-    // Hint chips
+    // -------------------------------------------------------------------------
+    // Hint chips & search button
+    // -------------------------------------------------------------------------
     document.querySelectorAll('.hint-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         input.value = chip.dataset.query;
@@ -958,6 +972,9 @@
 
     btn.addEventListener('click', doSearch);
 
+    // -------------------------------------------------------------------------
+    // UI helpers
+    // -------------------------------------------------------------------------
     function showLoading() {
       loading.style.display = 'block';
       errorBox.style.display = 'none';
@@ -976,6 +993,9 @@
       errorBox.style.display = 'block';
     }
 
+    // -------------------------------------------------------------------------
+    // Search
+    // -------------------------------------------------------------------------
     async function doSearch() {
       const query = input.value.trim();
       if (!query) return;
@@ -1007,8 +1027,10 @@
       }
     }
 
+    // -------------------------------------------------------------------------
+    // Render species card
+    // -------------------------------------------------------------------------
     function renderCard(data) {
-      // Names
       const taxon = data.taxon || {};
       const commonNames = taxon.common_names || [];
       const englishName = commonNames.find(n => n.language === 'eng') || commonNames[0];
@@ -1018,7 +1040,6 @@
       document.getElementById('common-name').textContent = displayName;
       document.getElementById('latin-name').textContent = scientificName;
 
-      // IUCN status
       const category = data.red_list_category || {};
       const code = category.code || 'NE';
       const statusInfo = IUCN_STATUS[code] || IUCN_STATUS['NE'];
@@ -1027,7 +1048,6 @@
       document.getElementById('status-code').textContent = code;
       document.getElementById('status-label').textContent = statusInfo.label;
 
-      // Population trend — Priority 2 fix applied here
       const rawTrend = data.population_trend;
       const trendKey = normaliseTrend(rawTrend);
       const trendInfo = TREND_DISPLAY[trendKey] || { label: trendKey, cls: 'trend-unknown' };
@@ -1035,15 +1055,12 @@
       trendEl.textContent = trendInfo.label;
       trendEl.className = `meta-value ${trendInfo.cls}`;
 
-      // Taxonomy
       document.getElementById('kingdom').textContent = taxon.kingdom_name || '—';
       document.getElementById('class-name').textContent = taxon.class_name || '—';
 
-      // Year assessed
       const year = data.year_published || data.assessment_date || '—';
       document.getElementById('last-assessed').textContent = year;
 
-      // Habitat / rationale text
       const rationale = data.rationale || data.habitat || '';
       const habitatSection = document.getElementById('habitat-section');
       if (rationale) {
@@ -1056,6 +1073,9 @@
       }
     }
 
+    // -------------------------------------------------------------------------
+    // iNaturalist sightings map
+    // -------------------------------------------------------------------------
     async function loadiNatSightings(speciesName) {
       const mapContainer = document.getElementById('species-map');
       const mapLoading = document.getElementById('map-loading');
