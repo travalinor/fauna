@@ -122,7 +122,6 @@ const SPECIES_LOOKUP = {
   'american black bear':     'Ursus americanus',
   'spectacled bear':         'Tremarctos ornatus',
   'andean bear':             'Tremarctos ornatus',
-  'giant panda':             'Ailuropoda melanoleuca',
 
   // -------------------------------------------------------------------------
   // MARINE MAMMALS — WHALES & DOLPHINS
@@ -223,7 +222,6 @@ const SPECIES_LOOKUP = {
   // -------------------------------------------------------------------------
   // AMPHIBIANS
   // -------------------------------------------------------------------------
-  'chinese giant salamander': 'Andrias davidianus',
   'axolotl':                 'Ambystoma mexicanum',
   'golden poison frog':      'Phyllobates terribilis',
   'blue poison dart frog':   'Dendrobates tinctorius',
@@ -264,7 +262,6 @@ const SPECIES_LOOKUP = {
   // BIRDS — UK & BLUE EARTH SUMMIT AUDIENCE RELEVANT
   // -------------------------------------------------------------------------
   'red kite':                'Milvus milvus',
-  'osprey':                  'Pandion haliaetus',
   'barn owl':                'Tyto alba',
   'atlantic puffin':         'Fratercula arctica',
   'puffin':                  'Fratercula arctica',
@@ -312,7 +309,6 @@ const SPECIES_LOOKUP = {
   'timber wolf':             'Canis lupus',
   'ethiopian wolf':          'Canis simensis',
   'maned wolf':              'Chrysocyon brachyurus',
-  'dhole':                   'Cuon alpinus',
   'arctic fox':              'Vulpes lagopus',
   'swift fox':               'Vulpes velox',
   'fennec fox':              'Vulpes zerda',
@@ -360,7 +356,6 @@ const SPECIES_LOOKUP = {
   'giant anteater':          'Myrmecophaga tridactyla',
   'giant armadillo':         'Priodontes maximus',
   'binturong':               'Arctictis binturong',
-  'clouded leopard':         'Neofelis nebulosa',
   'wolverine':               'Gulo gulo',
   'european otter':          'Lutra lutra',
   'giant otter':             'Pteronura brasiliensis',
@@ -393,9 +388,15 @@ exports.handler = async function (event) {
   const key = raw.trim().toLowerCase();
   const scientificName = SPECIES_LOOKUP[key] || raw.trim();
 
+  // Split scientific name into genus and species for IUCN v4 API
+  // The v4 API requires genus_name and species_name as separate parameters
+  const parts = scientificName.trim().split(/\s+/);
+  const genus = parts[0];
+  const species = parts[1] || '';
+
   try {
-    // Search for the species by scientific name
-    const searchUrl = `https://api.iucnredlist.org/api/v4/taxa/scientific_name?name=${encodeURIComponent(scientificName)}`;
+    const searchUrl = `https://api.iucnredlist.org/api/v4/taxa/scientific_name?genus_name=${encodeURIComponent(genus)}&species_name=${encodeURIComponent(species)}`;
+
     const searchRes = await fetch(searchUrl, {
       headers: {
         Authorization: token,
