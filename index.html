@@ -812,8 +812,8 @@
     function normaliseTrend(raw) {
       if (!raw) return 'Unknown';
       const val = (typeof raw === 'object' && raw !== null)
-        ? (raw.description || raw.name || raw.code || '')
-        : String(raw);
+      ? (raw.description?.en || raw.description || raw.name || raw.code || '')
+       : String(raw);
       const v = val.trim().toLowerCase();
       if (v === 'decreasing' || v === 'decline' || v === 'declining')  return 'Decreasing';
       if (v === 'increasing' || v === 'increase')                       return 'Increasing';
